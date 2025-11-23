@@ -10,6 +10,8 @@ export class BlackjackScene extends Phaser.Scene {
 	private dealerHand: CardData[] = [];
 	private currentState: GameState = GameState.Betting;
 
+	private playerCoins: number = 50;
+
 	// Track visual objects mapped to their data
 	private cardContainers = new Map<CardData, Phaser.GameObjects.Container>();
 
@@ -17,6 +19,7 @@ export class BlackjackScene extends Phaser.Scene {
 	private resultText!: Phaser.GameObjects.Text;
 	private playerScoreText!: Phaser.GameObjects.Text;
 	private dealerScoreText!: Phaser.GameObjects.Text;
+	private coinsText!: Phaser.GameObjects.Text;
 
 	private hitBtn!: BlackjackButton;
 	private standBtn!: BlackjackButton;
@@ -67,9 +70,12 @@ export class BlackjackScene extends Phaser.Scene {
 		// Title
 		this.add.text(cx, 60, "BLACKJACK", { fontSize: "64px", fontStyle: "bold" }).setOrigin(0.5);
 
+		// Coins Display
+		this.coinsText = this.add.text(cx, 130, `Fichas: ${this.playerCoins}`, { fontSize: "40px", color: "#ffff00" }).setOrigin(0.5);
+
 		// Score Boards
-		this.dealerScoreText = this.add.text(cx, 360, "Dealer: 0", { fontSize: "40px" }).setOrigin(0.5);
-		this.playerScoreText = this.add.text(cx, 700, "Player: 0", { fontSize: "40px" }).setOrigin(0.5);
+		this.dealerScoreText = this.add.text(cx, 400, "Dealer: 0", { fontSize: "40px" }).setOrigin(0.5);
+		this.playerScoreText = this.add.text(cx, 700, "Jogador: 0", { fontSize: "40px" }).setOrigin(0.5);
 
 		// Result Text (Win/Loss)
 		this.resultText = this.add
@@ -90,13 +96,13 @@ export class BlackjackScene extends Phaser.Scene {
 	private createButtons(cx: number) {
 		const btnY = 1000;
 
-		this.hitBtn = new BlackjackButton(this, cx - 300, btnY, "HIT", GAME_CONFIG.colors.buttonHit, () => this.handleHit(), "btn_blue");
+		this.hitBtn = new BlackjackButton(this, cx - 300, btnY, "PUXAR", GAME_CONFIG.colors.buttonHit, () => this.handleHit(), "btn_blue");
 
-		this.standBtn = new BlackjackButton(this, cx, btnY, "STAND", GAME_CONFIG.colors.buttonStand, () => this.handleStand(), "btn_red");
+		this.standBtn = new BlackjackButton(this, cx, btnY, "PARAR", GAME_CONFIG.colors.buttonStand, () => this.handleStand(), "btn_red");
 
-		this.dealBtn = new BlackjackButton(this, cx, btnY, "DEAL", GAME_CONFIG.colors.buttonDeal, () => this.startPlayingPhase(), "btn_green");
+		this.dealBtn = new BlackjackButton(this, cx, btnY, "INICIAR", GAME_CONFIG.colors.buttonDeal, () => this.startPlayingPhase(), "btn_green");
 
-		this.restartBtn = new BlackjackButton(this, cx, 840, "PLAY AGAIN", GAME_CONFIG.colors.button, () => this.startNewRound());
+		this.restartBtn = new BlackjackButton(this, cx, btnY, "CONTINUAR", GAME_CONFIG.colors.button, () => this.startNewRound());
 	}
 
 	// --- Game Flow Control ---
@@ -122,7 +128,7 @@ export class BlackjackScene extends Phaser.Scene {
 		this.playerHand = [];
 		this.dealerHand = [];
 		this.resultText.setText("");
-		this.playerScoreText.setText("Player: 0");
+		this.playerScoreText.setText("Jogador: 0");
 		this.dealerScoreText.setText("Dealer: 0");
 		this.currentState = GameState.Betting;
 	}
@@ -349,7 +355,7 @@ export class BlackjackScene extends Phaser.Scene {
 		this.time.delayedCall(500, () => {
 			const score = this.calculateHandValue(this.playerHand);
 			if (score > 21) {
-				this.endGame("BUST!", false);
+				this.endGame("ESTOUROU!", false);
 			}
 		});
 	}
@@ -386,7 +392,7 @@ export class BlackjackScene extends Phaser.Scene {
 		if (pScore === 21) {
 			if (dScore === 21) {
 				this.revealDealerCard();
-				this.endGame("PUSH", null);
+				this.endGame("EMPATE!", null);
 			} else {
 				this.endGame("BLACKJACK!", true);
 			}
@@ -398,22 +404,35 @@ export class BlackjackScene extends Phaser.Scene {
 		const dScore = this.calculateHandValue(this.dealerHand);
 
 		if (dScore > 21) {
-			this.endGame("DEALER BUSTS!", true);
+			this.endGame("DEALER ESTOUROU!", true);
 		} else if (pScore > dScore) {
-			this.endGame("YOU WIN!", true);
+			this.endGame("GANHOU!", true);
 		} else if (pScore < dScore) {
-			this.endGame("DEALER WINS", false);
+			this.endGame("PERDEU", false);
 		} else {
-			this.endGame("PUSH", null);
+			this.endGame("EMPATE!", null);
 		}
 	}
-
 	private endGame(message: string, winStatus: boolean | null) {
 		this.updateUIState(GameState.GameOver);
 		this.resultText.setText(message);
 
-		if (winStatus === true) this.resultText.setColor("#00FF00");
-		else if (winStatus === false) this.resultText.setColor("#FF0000");
-		else this.resultText.setColor("#FFFFFF");
+		if (winStatus === true) {
+			this.playerCoins += 10;
+			this.resultText.setColor("#00FF00");
+			// Update Button to Green
+			this.restartBtn.updateTexture("btn_green");
+		} else if (winStatus === false) {
+			this.playerCoins -= 10;
+			this.resultText.setColor("#FF0000");
+			// Update Button to Red
+			this.restartBtn.updateTexture("btn_red");
+		} else {
+			this.resultText.setColor("#FFFFFF");
+			// Default for Push
+			this.restartBtn.updateTexture("btn_blue");
+		}
+
+		this.coinsText.setText(`Coins: ${this.playerCoins}`);
 	}
 }

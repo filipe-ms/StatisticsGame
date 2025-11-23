@@ -3,29 +3,20 @@ import * as Phaser from "phaser";
 export class BlackjackButton extends Phaser.GameObjects.Container {
 	private bg: Phaser.GameObjects.Rectangle | Phaser.GameObjects.Image;
 	private text: Phaser.GameObjects.Text;
+	private callback: () => void; // Store callback to re-bind events
 
-	constructor(
-		scene: Phaser.Scene,
-		x: number,
-		y: number,
-		label: string,
-		color: number,
-		callback: () => void,
-		texture?: string // Added optional texture parameter
-	) {
+	constructor(scene: Phaser.Scene, x: number, y: number, label: string, color: number, callback: () => void, texture?: string) {
 		super(scene, x, y);
+		this.callback = callback;
 
 		// Button Background
 		if (texture) {
 			this.bg = scene.add.image(0, 0, texture);
-			// Scale to match standard button size for consistency
 			this.bg.setDisplaySize(240, 100);
 		} else {
 			this.bg = scene.add.rectangle(0, 0, 240, 100, color);
 			this.bg.setStrokeStyle(4, 0xffffff);
 		}
-
-		this.bg.setInteractive({ useHandCursor: true });
 
 		// Button Text
 		this.text = scene.add
@@ -38,16 +29,20 @@ export class BlackjackButton extends Phaser.GameObjects.Container {
 
 		this.add([this.bg, this.text]);
 
-		// Interactions
+		this.setupInteractions();
+		scene.add.existing(this);
+	}
+
+	private setupInteractions() {
+		this.bg.setInteractive({ useHandCursor: true });
+
 		this.bg.on("pointerdown", () => {
 			this.animateClick();
-			callback();
+			this.callback();
 		});
 
 		this.bg.on("pointerover", () => this.bg.setAlpha(0.8));
 		this.bg.on("pointerout", () => this.bg.setAlpha(1));
-
-		scene.add.existing(this);
 	}
 
 	private animateClick() {
@@ -58,6 +53,23 @@ export class BlackjackButton extends Phaser.GameObjects.Container {
 			duration: 50,
 			yoyo: true,
 		});
+	}
+
+	public updateTexture(textureKey: string) {
+		// remove old background
+		if (this.bg) {
+			this.bg.destroy();
+		}
+
+		// Create new image background
+		this.bg = this.scene.add.image(0, 0, textureKey);
+		this.bg.setDisplaySize(240, 100);
+
+		// Insert at index 0 (bottom) so text remains on top
+		this.addAt(this.bg, 0);
+
+		// Re-apply interactions since we destroyed the old object
+		this.setupInteractions();
 	}
 
 	public setVisible(value: boolean): this {
