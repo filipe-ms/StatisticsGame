@@ -43,6 +43,9 @@ export class BlackjackScene extends Phaser.Scene {
 
 	// 1 = Win, 0 = Loss, null = Tie
 	private winLossHistory: (number | null)[] = [];
+
+	private chanceTo21OnNextDraw: number = 0;
+
 	cardsDrawn: number = 0;
 
 	private playerCoins: number = 50;
@@ -167,6 +170,7 @@ export class BlackjackScene extends Phaser.Scene {
 		this.dealerScoreText.setText("Dealer: 0");
 		this.currentState = GameState.Betting;
 		this.winChanceAtStand = 0;
+		this.chanceTo21OnNextDraw = 0;
 		// Note: Statistics persist
 	}
 
@@ -369,7 +373,11 @@ export class BlackjackScene extends Phaser.Scene {
 
 		this.time.delayedCall(500, () => {
 			const score = this.calculateHandValue(this.playerHand);
+
+			// UPDATE STATS HERE: Recalculate win chance and chance to 21
 			this.winChance = this.calculateWinProbability();
+			this.chanceTo21OnNextDraw = this.calculateChanceTo21();
+			console.log(`Hit Update - Win Chance: ${(this.winChance * 100).toFixed(1)}% | Chance to 21: ${(this.chanceTo21OnNextDraw * 100).toFixed(1)}%`);
 
 			if (score > 21) {
 				this.endGame("ESTOUROU!", false);
@@ -550,7 +558,9 @@ export class BlackjackScene extends Phaser.Scene {
 
 	private updateStatsAfterDeal() {
 		this.winChance = this.calculateWinProbability();
-		console.log(`Stats Update - Win Chance: ${(this.winChance * 100).toFixed(1)}%`);
+		this.chanceTo21OnNextDraw = this.calculateChanceTo21();
+
+		console.log(`Stats Update - Win Chance: ${(this.winChance * 100).toFixed(1)}% | Chance to 21: ${(this.chanceTo21OnNextDraw * 100).toFixed(1)}%`);
 	}
 
 	/**
@@ -662,5 +672,26 @@ export class BlackjackScene extends Phaser.Scene {
 		if (isRisky) this.riskyPlays++;
 		this.riskHistory.push(risk);
 		this.riskAverage = this.riskHistory.reduce((a, b) => a + b, 0) / this.riskHistory.length;
+	}
+
+	private calculateChanceTo21(): number {
+		const currentScore = this.calculateHandValue(this.playerHand);
+		// If already 21 or greater, we can't draw to hit 21
+		if (currentScore >= 21) return 0;
+
+		let validCards = 0;
+		const totalCards = this.deck.length;
+		if (totalCards === 0) return 0;
+
+		// Simulate adding every remaining card in the deck to check if it hits 21
+		// This handles Soft/Hard Ace logic automatically via calculateHandValue
+		for (const card of this.deck) {
+			const tempHand = [...this.playerHand, card];
+			if (this.calculateHandValue(tempHand) === 21) {
+				validCards++;
+			}
+		}
+
+		return validCards / totalCards;
 	}
 }
