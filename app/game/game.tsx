@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { BlackjackScene } from "./singleplayer/BlackJackScene";
 import { GAME_CONFIG } from "./shared/types";
 import * as Phaser from "phaser";
+import { StatsPanelLeft } from "@/components/stats/StatsPanelLeft";
+import { StatsPanelRight } from "@/components/stats/StatsPanelRight";
 
 export default function BlackjackGame() {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -36,5 +38,11 @@ export default function BlackjackGame() {
 		};
 	}, []);
 
-	return <div ref={containerRef} />;
+	return (
+		<div className="relative w-full h-full">
+			<div ref={containerRef} className="w-full h-full" />
+			<StatsPanelLeft />
+			<StatsPanelRight />
+		</div>
+	);
 }
