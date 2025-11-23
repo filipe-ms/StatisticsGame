@@ -1,7 +1,7 @@
 "use client";
 
 import { BlackjackButton } from "./BlackJackButton";
-import { GameState, CardData, GAME_CONFIG } from "./types";
+import { GameState, CardData, GAME_CONFIG } from "../shared/types";
 
 export class BlackjackScene extends Phaser.Scene {
 	// -- State --

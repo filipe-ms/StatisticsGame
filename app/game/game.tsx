@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { BlackjackScene } from "./BlackJackScene";
-import { GAME_CONFIG } from "./types";
+import { BlackjackScene } from "./singleplayer/BlackJackScene";
+import { GAME_CONFIG } from "./shared/types";
 import * as Phaser from "phaser";
 
 export default function BlackjackGame() {
