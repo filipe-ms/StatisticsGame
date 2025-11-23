@@ -441,6 +441,46 @@ export class BlackjackScene extends Phaser.Scene {
 		}
 	}
 
+	/**
+	 * Combinations Function C(n, k)
+	 * Calculates the number of ways to choose k items from a set of n distinct items.
+	 */
+	private combinations(n: number, k: number): number {
+		if (k < 0 || k > n) return 0;
+		if (k === 0 || k === n) return 1;
+		if (k > n / 2) k = n - k; // Optimization: C(n, k) == C(n, n-k)
+
+		let res = 1;
+		for (let i = 1; i <= k; i++) {
+			res = (res * (n - i + 1)) / i;
+		}
+		return Math.round(res);
+	}
+
+	/**
+	 * Hypergeometric Distribution P(X = k)
+	 * Calculates the probability of obtaining exactly k successes in n draws,
+	 * from a population of size N containing K total successes.
+	 *
+	 * Formula: [ C(K, k) * C(N-K, n-k) ] / C(N, n)
+	 *
+	 * @param N Total Population Size (e.g. Total Cards in Deck)
+	 * @param K Total Successes in Population (e.g. Total Bust Cards in Deck)
+	 * @param n Sample Size (e.g. Number of cards to draw, usually 1)
+	 * @param k Number of Successes desired (e.g. 1 bust card)
+	 */
+	private calculateHypergeometric(N: number, K: number, n: number, k: number): number {
+		if (N <= 0) return 0;
+
+		const waysToChooseSuccesses = this.combinations(K, k);
+		const waysToChooseFailures = this.combinations(N - K, n - k);
+		const totalWaysToChoose = this.combinations(N, n);
+
+		if (totalWaysToChoose === 0) return 0;
+
+		return (waysToChooseSuccesses * waysToChooseFailures) / totalWaysToChoose;
+	}
+
 	private endGame(message: string, winStatus: boolean | null) {
 		this.updateUIState(GameState.GameOver);
 		this.resultText.setText(message);
@@ -471,30 +511,12 @@ export class BlackjackScene extends Phaser.Scene {
 	// --- Statistics & Probabilities ---
 
 	private isSoftHand(hand: CardData[]): boolean {
-		let score = 0;
+		let rawScore = 0;
 		let aces = 0;
 		hand.forEach((c) => {
-			score += c.weight;
+			rawScore += c.weight;
 			if (c.value === "A") aces++;
 		});
-
-		// If we have aces, and calculating raw weight keeps us <= 21, we are using an Ace as 11.
-		// If we have to subtract 10 to stay under 21 for ALL aces, it is Hard.
-		if (aces === 0) return false;
-
-		// Simple check: Calculate max possible score (all aces 11)
-		// If that score > 21, we reduce.
-		// If after reducing ALL aces to 1 we are still <= 21, then it was hard/soft transition.
-		// Actually simpler: A hand is soft if it contains an Ace valued at 11.
-		// My calculateHandValue reduces automatically.
-		// If (Score - 10) is still a valid Total for the cards if Ace was 1, then Ace is currently 11.
-		// Wait, easier way:
-		let rawScore = 0;
-		hand.forEach((c) => (rawScore += c.weight)); // Ace is 11 here
-
-		// If we have aces and rawScore <= 21, it's Soft.
-		// If rawScore > 21, we subtract 10. If we *stop* subtracting before running out of aces because we hit <=21, it's still soft.
-		// If we reduce ALL aces and score <= 21, it's Hard.
 
 		let tempScore = rawScore;
 		let tempAces = aces;
@@ -504,7 +526,6 @@ export class BlackjackScene extends Phaser.Scene {
 			tempAces--;
 		}
 
-		// If we still have "active" aces (tempAces > 0) that act as 11, it is soft.
 		return tempAces > 0;
 	}
 
@@ -513,22 +534,31 @@ export class BlackjackScene extends Phaser.Scene {
 		if (currentScore >= 21) return 1.0;
 
 		const buffer = 21 - currentScore;
-		let bustCards = 0;
-		const totalCards = this.deck.length;
+		const totalCards = this.deck.length; // N (Population)
 
 		if (totalCards === 0) return 0;
 
+		// Calculate K: Number of cards in deck that cause a bust
+		let bustCardsCount = 0;
 		for (const card of this.deck) {
 			let val = card.weight;
-			if (card.value === "A") val = 1;
+			if (card.value === "A") val = 1; // Minimum value for Ace
 			if (val > buffer) {
-				bustCards++;
+				bustCardsCount++;
 			}
 		}
-		return bustCards / totalCards;
+
+		// Apply Hypergeometric Distribution
+		// Population (N) = totalCards
+		// Total Successes (K) = bustCardsCount
+		// Sample Size (n) = 1 (We are drawing 1 card)
+		// Observed Successes (k) = 1 (We want to know probability of getting exactly 1 bust card)
+		return this.calculateHypergeometric(totalCards, bustCardsCount, 1, 1);
 	}
 
 	private calculateWinProbability(simulations = 500): number {
+		// Monte Carlo is still best here because Dealer's draw count is variable (not fixed n).
+		// Recursive Hypergeometric trees are too expensive for real-time web.
 		const pScore = this.calculateHandValue(this.playerHand);
 		if (pScore > 21) return 0;
 
@@ -657,7 +687,7 @@ export class BlackjackScene extends Phaser.Scene {
 		let isRisky = false;
 
 		if (action === "hit") {
-			risk = this.calculateBustProbability();
+			risk = this.calculateBustProbability(); // Now uses Hypergeometric
 			if (risk > 0.4) isRisky = true;
 		} else {
 			const winProb = this.calculateWinProbability();
@@ -679,19 +709,23 @@ export class BlackjackScene extends Phaser.Scene {
 		// If already 21 or greater, we can't draw to hit 21
 		if (currentScore >= 21) return 0;
 
-		let validCards = 0;
-		const totalCards = this.deck.length;
+		const totalCards = this.deck.length; // N (Population)
 		if (totalCards === 0) return 0;
 
-		// Simulate adding every remaining card in the deck to check if it hits 21
-		// This handles Soft/Hard Ace logic automatically via calculateHandValue
+		// Calculate K: Number of cards in deck that exactly complete a 21
+		let favorableCardsCount = 0;
 		for (const card of this.deck) {
 			const tempHand = [...this.playerHand, card];
 			if (this.calculateHandValue(tempHand) === 21) {
-				validCards++;
+				favorableCardsCount++;
 			}
 		}
 
-		return validCards / totalCards;
+		// Apply Hypergeometric Distribution
+		// Population (N) = totalCards
+		// Total Successes (K) = favorableCardsCount
+		// Sample Size (n) = 1 (Drawing 1 card)
+		// Observed Successes (k) = 1 (Exactly 1 card completes the 21)
+		return this.calculateHypergeometric(totalCards, favorableCardsCount, 1, 1);
 	}
 }
