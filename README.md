@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blackjack
 
-## Getting Started
+Um jogo de Blackjack com análise estatística em tempo real, desenvolvido com Next.js e Phaser.
 
-First, run the development server:
+## 📋 Pré-requisitos
+
+Antes de começar, certifique-se de ter instalado:
+
+-   [Node.js](https://nodejs.org/) (versão 18 ou superior)
+-   [npm](https://www.npmjs.com/) (geralmente vem com o Node.js)
+
+## 🚀 Como executar o projeto
+
+### 1. Instalar dependências
+
+Primeiro, instale todas as dependências do projeto:
+
+```bash
+npm install
+```
+
+Este comando irá instalar todas as dependências listadas no `package.json`, incluindo:
+
+-   Next.js
+-   React
+-   Phaser
+-   Recharts
+-   Tailwind CSS
+-   E outras dependências necessárias
+
+### 2. Executar o servidor de desenvolvimento
+
+Após instalar as dependências, execute o servidor de desenvolvimento:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O servidor será iniciado e você verá uma mensagem indicando que a aplicação está rodando em `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Acessar a aplicação
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abra seu navegador e acesse:
 
-## Learn More
+```
+http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+A página será recarregada automaticamente sempre que você fizer alterações nos arquivos do projeto.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Tecnologias utilizadas
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+-   **Next.js 16** - Framework React para produção
+-   **React 19** - Biblioteca JavaScript para interfaces
+-   **Phaser 3** - Framework de jogos 2D
+-   **Recharts** - Biblioteca de gráficos para React
+-   **Tailwind CSS** - Framework CSS utilitário
+-   **TypeScript** - Superset do JavaScript com tipagem estática
 
-## Deploy on Vercel
+## 📁 Estrutura do projeto
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+StatisticsGame/
+├── app/                    # Páginas e rotas do Next.js
+│   ├── game/              # Lógica do jogo Blackjack
+│   └── page.tsx           # Página principal
+├── components/            # Componentes React
+│   ├── stats/            # Componentes de estatísticas
+│   └── ui/               # Componentes de interface
+├── public/               # Arquivos estáticos
+└── package.json          # Dependências do projeto
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎮 Funcionalidades
+
+-   Jogo de Blackjack interativo
+-   Análise estatística em tempo real
+-   Gráficos de probabilidades e histórico
+-   Painéis de estatísticas detalhadas
