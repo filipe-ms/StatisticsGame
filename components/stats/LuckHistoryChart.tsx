@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { StatisticsEmitter } from "@/app/game/shared/StatisticsEmitter";
-import {
-	ChartContainer,
-	ChartTooltip,
-	ChartTooltipContent,
-} from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from "recharts";
 
 const chartConfig = {
@@ -26,10 +22,7 @@ export function LuckHistoryChart() {
 
 	useEffect(() => {
 		const emitter = StatisticsEmitter.getInstance();
-		const handleUpdate = (data: {
-			luckHistory: number[];
-			luckFactor: number;
-		}) => {
+		const handleUpdate = (data: { luckHistory: number[]; luckFactor: number }) => {
 			setLuckHistory([...data.luckHistory]);
 			setLuckFactor(data.luckFactor);
 		};
@@ -51,11 +44,11 @@ export function LuckHistoryChart() {
 		};
 	});
 
+	const averageLuck = luckHistory.length > 0 ? luckFactor / luckHistory.length : 0;
+
 	return (
 		<div className="w-full space-y-2 bg-[#0a4a1f] rounded-lg border-2 border-[#00aa00] p-3 shadow-lg">
-			<h3 className="text-xs font-bold text-white drop-shadow-[0_0_3px_rgba(0,170,0,0.8)] uppercase tracking-wide">
-				🍀 Histórico de Sorte
-			</h3>
+			<h3 className="text-xs font-bold text-white drop-shadow-[0_0_3px_rgba(0,170,0,0.8)] uppercase tracking-wide">🍀 Histórico de Sorte</h3>
 			<ChartContainer config={chartConfig} className="h-[140px]">
 				<LineChart
 					data={chartData}
@@ -75,13 +68,7 @@ export function LuckHistoryChart() {
 						tick={{ fill: "#ffffff", fontSize: 11, fontWeight: "600" }}
 						label={{ value: "Mão", position: "insideBottom", offset: -5, style: { fill: "#ffffff", fontSize: "10px", fontWeight: "bold" } }}
 					/>
-					<YAxis
-						tickLine={false}
-						axisLine={false}
-						tickMargin={8}
-						tick={{ fill: "#ffffff", fontSize: 11, fontWeight: "600" }}
-						tickFormatter={(value) => `${value}%`}
-					/>
+					<YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fill: "#ffffff", fontSize: 11, fontWeight: "600" }} tickFormatter={(value) => `${value}%`} />
 					<ReferenceLine y={0} stroke="#ffffff" strokeDasharray="2 2" opacity={0.5} />
 					<ChartTooltip
 						content={({ active, payload }) => {
@@ -93,9 +80,7 @@ export function LuckHistoryChart() {
 										<span className="text-white text-xs font-bold">
 											Mão {data.payload.hand}: {data.value}%
 										</span>
-										<span className="text-white text-[10px] opacity-90">
-											Acumulado: {data.payload.cumulative}%
-										</span>
+										<span className="text-white text-[10px] opacity-90">Acumulado: {data.payload.cumulative}%</span>
 									</div>
 								</ChartTooltipContent>
 							);
@@ -112,12 +97,8 @@ export function LuckHistoryChart() {
 				</LineChart>
 			</ChartContainer>
 			<div className="text-center text-[10px] space-y-1">
-				<div className="text-white font-bold bg-[#0a4a1f] rounded px-2 py-1 border border-[#00aa00]">
-					Sorte Total: {(luckFactor * 100).toFixed(1)}%
-				</div>
-				<div className="text-white text-[9px] opacity-80">
-					{luckFactor > 0 ? "Sorte positivo" : luckFactor < 0 ? "Sorte negativo" : "Neutro"}
-				</div>
+				<div className="text-white font-bold bg-[#0a4a1f] rounded px-2 py-1 border border-[#00aa00]">Sorte Média: {(averageLuck * 100).toFixed(1)}%</div>
+				<div className="text-white text-[9px] opacity-80">{averageLuck > 0 ? "Sorte positiva" : averageLuck < 0 ? "Sorte negativa" : "Neutro"}</div>
 			</div>
 		</div>
 	);
